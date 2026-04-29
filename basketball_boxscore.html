@@ -111,17 +111,20 @@ input[type=text]:focus,input[type=date]:focus,input[type=time]:focus,input[type=
 .team-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 
 @media print {
-  body{background:#fff !important;font-size:10px}
-  h1,p.subtitle,.tabs,#tab-basic,#tab-score,#tab-teamA,#tab-teamB,.btn-row{display:none !important}
-  #tab-report{display:block !important}
-  .container{padding:0;max-width:100%}
-  .card{border:1px solid #ccc;border-radius:4px;padding:8px;margin-bottom:8px;break-inside:avoid}
-  .report-title{font-size:15px}
-  .score-pts{font-size:24px}
-  .box-table th,.box-table td{font-size:8px;padding:2px}
-  .qtr-table th,.qtr-table td,.adv-table th,.adv-table td{font-size:9px;padding:3px}
-  .legend-box{font-size:7px}
-  @page{margin:10mm;size:A4 landscape}
+  body *{visibility:hidden}
+  #printArea, #printArea *{visibility:visible}
+  #printArea{
+    position:absolute;top:0;left:0;width:100%;
+    background:#fff;padding:8mm;font-size:10px;color:#000
+  }
+  #printArea .card{border:1px solid #ccc;border-radius:4px;padding:8px;margin-bottom:8px;page-break-inside:avoid}
+  #printArea .report-title{font-size:15px;color:#1860a5}
+  #printArea .score-pts{font-size:22px}
+  #printArea .box-table th,#printArea .box-table td{font-size:8px;padding:2px}
+  #printArea .qtr-table th,#printArea .qtr-table td{font-size:9px;padding:3px}
+  #printArea .legend-box{font-size:7px}
+  #printArea .section-title{font-size:11px}
+  @page{margin:8mm;size:A4 landscape}
 }
 </style>
 </head>
