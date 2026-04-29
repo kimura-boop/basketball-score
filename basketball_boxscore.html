@@ -467,7 +467,6 @@ function generateReport(){
   //      = (possA + possB) ÷ 2
   // ※OTがある場合はMPGにOT時間を加算（OT=5分固定）
   const qmin=window._qmin||10;
-  const periods=window._periods||4;
   const otMin=+document.getElementById('aot').value>0||+document.getElementById('bot').value>0?5:0;
   const mpg=qmin*periods+otMin;
   const teamMinA=mpg*5; // 5人分
@@ -619,4 +618,4 @@ buildScoreGrid();
 document.getElementById('gamedate').value=new Date().toISOString().slice(0,10);
 </script>
 </body>
-</html>　
+</html>
