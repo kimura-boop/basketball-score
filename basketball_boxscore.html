@@ -436,6 +436,60 @@ function boxRow(p){
   </tr>`;
 }
 
+function dualBar(labelA,valA,labelB,valB,label,unit,higherIsBetter){
+  if(higherIsBetter===undefined)higherIsBetter=true;
+  const maxVal=Math.max(+valA,+valB,0.001);
+  const pctA=(+valA/maxVal*100).toFixed(1);
+  const pctB=(+valB/maxVal*100).toFixed(1);
+  const aWins=higherIsBetter?(+valA>+valB):(+valA<+valB);
+  const bWins=higherIsBetter?(+valB>+valA):(+valB<+valA);
+  return `<div style="margin-bottom:12px">
+    <div style="font-size:10px;font-weight:600;color:#666;margin-bottom:5px">${label}</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+      <div style="width:80px;text-align:right;font-size:10px;font-weight:${aWins?'700':'400'};color:${aWins?'#1860a5':'#666'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${labelA}</div>
+      <div style="flex:1;background:#eef3fb;border-radius:3px;height:18px;overflow:hidden">
+        <div style="background:${aWins?'#1860a5':'#90afd4'};height:100%;width:${pctA}%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">
+          <span style="font-size:10px;color:#fff;font-weight:700;white-space:nowrap">${valA}${unit||''}</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div style="width:80px;text-align:right;font-size:10px;font-weight:${bWins?'700':'400'};color:${bWins?'#c0392b':'#666'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${labelB}</div>
+      <div style="flex:1;background:#fdf0f0;border-radius:3px;height:18px;overflow:hidden">
+        <div style="background:${bWins?'#c0392b':'#e89090'};height:100%;width:${pctB}%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">
+          <span style="font-size:10px;color:#fff;font-weight:700;white-space:nowrap">${valB}${unit||''}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function pieChart(teamName,r3,r2,rf,s3,s2,sf){
+  const vals=[+r3,+r2,+rf];
+  const colors=['#1860a5','#27ae60','#e67e22'];
+  const labels=['3P','2P','FT'];
+  const counts=[s3,s2,sf];
+  const size=110,cx=55,cy=55,radius=48;
+  let paths='',startAngle=-90;
+  vals.forEach((v,i)=>{
+    const angle=v/100*360;
+    const endAngle=startAngle+angle;
+    const r1=startAngle*Math.PI/180,r2e=endAngle*Math.PI/180;
+    const x1=cx+radius*Math.cos(r1),y1=cy+radius*Math.sin(r1);
+    const x2=cx+radius*Math.cos(r2e),y2=cy+radius*Math.sin(r2e);
+    const largeArc=angle>180?1:0;
+    if(v>0){
+      paths+=`<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${radius},${radius} 0 ${largeArc},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${colors[i]}" stroke="#fff" stroke-width="1.5"/>`;
+      const mid=(startAngle+endAngle)/2*Math.PI/180;
+      const lx=cx+radius*0.65*Math.cos(mid),ly=cy+radius*0.65*Math.sin(mid);
+      if(v>8) paths+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="9" font-weight="bold">${v}%</text>`;
+    }
+    startAngle=endAngle;
+  });
+  const legend=colors.map((c,i)=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#444"><span style="display:inline-block;width:10px;height:10px;background:${c};border-radius:2px;flex-shrink:0"></span><span>${labels[i]} ${vals[i]}%（${counts[i]}本）</span></div>`).join('');
+  return `<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:600;color:#444;margin-bottom:6px;text-align:center">${teamName}</div><div style="display:flex;align-items:center;gap:12px"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex-shrink:0">${paths}</svg><div style="display:flex;flex-direction:column;gap:5px">${legend}</div></div></div>`;
+}
+
 function generateReport(){
   const an=document.getElementById('teamAname').value||'チームA';
   const bn=document.getElementById('teamBname').value||'チームB';
@@ -475,79 +529,12 @@ function generateReport(){
   const r3A=(s3A/stotA*100).toFixed(1),r2A=(s2A/stotA*100).toFixed(1),rfA=(sfA/stotA*100).toFixed(1);
   const r3B=(s3B/stotB*100).toFixed(1),r2B=(s2B/stotB*100).toFixed(1),rfB=(sfB/stotB*100).toFixed(1);
 
-  function dualBar(labelA,valA,labelB,valB,label,unit,higherIsBetter){
-    if(higherIsBetter===undefined)higherIsBetter=true;
-    const maxVal=Math.max(+valA,+valB,0.001);
-    const pctA=(+valA/maxVal*100).toFixed(1);
-    const pctB=(+valB/maxVal*100).toFixed(1);
-    const aWins=higherIsBetter?(+valA>+valB):(+valA<+valB);
-    const bWins=higherIsBetter?(+valB>+valA):(+valB<+valA);
-    return `<div style="margin-bottom:12px">
-      <div style="font-size:10px;font-weight:600;color:#666;margin-bottom:5px">${label}</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-        <div style="width:80px;text-align:right;font-size:10px;font-weight:${aWins?'700':'400'};color:${aWins?'#1860a5':'#666'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${labelA}</div>
-        <div style="flex:1;background:#eef3fb;border-radius:3px;height:18px;overflow:hidden">
-          <div style="background:${aWins?'#1860a5':'#90afd4'};height:100%;width:${pctA}%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">
-            <span style="font-size:10px;color:#fff;font-weight:700;white-space:nowrap">${valA}${unit||''}</span>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <div style="width:80px;text-align:right;font-size:10px;font-weight:${bWins?'700':'400'};color:${bWins?'#c0392b':'#666'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${labelB}</div>
-        <div style="flex:1;background:#fdf0f0;border-radius:3px;height:18px;overflow:hidden">
-          <div style="background:${bWins?'#c0392b':'#e89090'};height:100%;width:${pctB}%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">
-            <span style="font-size:10px;color:#fff;font-weight:700;white-space:nowrap">${valB}${unit||''}</span>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  function pieChart(teamName,r3,r2,rf,s3,s2,sf,idSuffix){
-    // SVGパイチャート生成
-    const vals=[+r3,+r2,+rf];
-    const colors=['#1860a5','#27ae60','#e67e22'];
-    const labels=['3P','2P','FT'];
-    const counts=[s3,s2,sf];
-    const size=110;
-    const cx=size/2,cy=size/2,radius=48;
-    let paths='';
-    let startAngle=-90; // 12時スタート
-    vals.forEach((v,i)=>{
-      const angle=v/100*360;
-      const endAngle=startAngle+angle;
-      const rad1=startAngle*Math.PI/180;
-      const rad2=endAngle*Math.PI/180;
-      const x1=cx+radius*Math.cos(rad1);
-      const y1=cy+radius*Math.sin(rad1);
-      const x2=cx+radius*Math.cos(rad2);
-      const y2=cy+radius*Math.sin(rad2);
-      const largeArc=angle>180?1:0;
-      if(v>0){
-        paths+=`<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${radius},${radius} 0 ${largeArc},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${colors[i]}" stroke="#fff" stroke-width="1.5"/>`;
-        // ラベル（中心角に配置）
-        const midAngle=(startAngle+endAngle)/2*Math.PI/180;
-        const lx=cx+(radius*0.65)*Math.cos(midAngle);
-        const ly=cy+(radius*0.65)*Math.sin(midAngle);
-        if(v>8){
-          paths+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="9" font-weight="bold">${v}%</text>`;
-        }
-      }
-      startAngle=endAngle;
-    });
-    const legend=colors.map((c,i)=>`
-      <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#444">
-        <span style="display:inline-block;width:10px;height:10px;background:${c};border-radius:2px;flex-shrink:0"></span>
-        <span>${labels[i]} ${vals[i]}%（${counts[i]}本）</span>
-      </div>`).join('');
-    return `<div style="margin-bottom:16px">
-      <div style="font-size:11px;font-weight:600;color:#444;margin-bottom:6px;text-align:center">${teamName}</div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex-shrink:0">${paths}</svg>
-        <div style="display:flex;flex-direction:column;gap:5px">${legend}</div>
-      </div>
-    </div>`;
-  }
+  // シュート成功本数比率計算
+  const m3A=advA.p3m,m2A=advA.p2m,mfA=advA.fm;
+  const m3B=advB.p3m,m2B=advB.p2m,mfB=advB.fm;
+  const mtotA=m3A+m2A+mfA||1,mtotB=m3B+m2B+mfB||1;
+  const mr3A=(m3A/mtotA*100).toFixed(1),mr2A=(m2A/mtotA*100).toFixed(1),mrfA=(mfA/mtotA*100).toFixed(1);
+  const mr3B=(m3B/mtotB*100).toFixed(1),mr2B=(m2B/mtotB*100).toFixed(1),mrfB=(mfB/mtotB*100).toFixed(1);
 
   const html=`<div id="printArea">
   <div class="card report-header">
@@ -608,9 +595,19 @@ function generateReport(){
         ${dualBar(an,parseFloat(advA.orbpct),bn,parseFloat(advB.orbpct),'ORB%（オフェンスRB獲得率）','%')}
       </div>
       <div>
-        <div style="font-size:11px;font-weight:700;color:#1860a5;margin-bottom:10px;padding-bottom:4px;border-bottom:2px solid #d0e0f5">シュート試投比率（3P／2P／FT）</div>
-        ${pieChart(an,r3A,r2A,rfA,s3A,s2A,sfA,'A')}
-        ${pieChart(bn,r3B,r2B,rfB,s3B,s2B,sfB,'B')}
+        <div style="font-size:11px;font-weight:700;color:#1860a5;margin-bottom:10px;padding-bottom:4px;border-bottom:2px solid #d0e0f5">シュート比率</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="font-size:10px;font-weight:600;color:#888;text-align:center;margin-bottom:6px">試投比率（3P／2P／FT）</div>
+            ${pieChart(an,r3A,r2A,rfA,s3A,s2A,sfA)}
+            ${pieChart(bn,r3B,r2B,rfB,s3B,s2B,sfB)}
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:600;color:#888;text-align:center;margin-bottom:6px">成功本数比率（3P／2P／FT）</div>
+            ${pieChart(an,mr3A,mr2A,mrfA,m3A,m2A,mfA)}
+            ${pieChart(bn,mr3B,mr2B,mrfB,m3B,m2B,mfB)}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -623,12 +620,20 @@ function generateReport(){
 }
 
 function printPDF(){
-  generateReport();
+  try {
+    generateReport();
+  } catch(e) {
+    alert('レポート生成中にエラーが発生しました：\n' + e.message);
+    return;
+  }
   setTimeout(()=>{
     const content=document.getElementById('printArea');
-    if(!content){alert('先にレポートを生成してください');return;}
+    if(!content){
+      alert('レポートの生成に失敗しました。先に「レポート生成」ボタンを押してください。');
+      return;
+    }
     window.print();
-  },150);
+  }, 300);
 }
 
 function buildScoreGrid(){
