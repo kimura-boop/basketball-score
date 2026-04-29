@@ -630,20 +630,45 @@ function generateReport(){
 }
 
 function printPDF(){
-  try {
-    generateReport();
-  } catch(e) {
-    alert('レポート生成中にエラーが発生しました：\n' + e.message);
-    return;
-  }
+  try { generateReport(); } catch(e){ alert('レポート生成エラー：\n'+e.message); return; }
   setTimeout(()=>{
     const content=document.getElementById('printArea');
-    if(!content){
-      alert('レポートの生成に失敗しました。先に「レポート生成」ボタンを押してください。');
-      return;
-    }
-    window.print();
-  }, 300);
+    if(!content){ alert('先にレポートを生成してください。'); return; }
+    const css=`
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif}
+body{padding:8mm;color:#000;background:#fff;font-size:10px}
+.card{background:#fff;border:1px solid #ccc;border-radius:6px;padding:10px;margin-bottom:10px;page-break-inside:avoid}
+.report-header{text-align:center}
+.report-title{font-size:16px;font-weight:bold;color:#1860a5}
+.report-sub{font-size:10px;color:#555;margin-top:3px}
+.score-display{display:flex;align-items:center;justify-content:center;gap:24px;padding:10px;background:#f0f4fb;border-radius:6px;margin:8px 0}
+.score-team{text-align:center}.score-team-name{font-size:10px;color:#666;margin-bottom:2px}
+.score-pts{font-size:26px;font-weight:bold;color:#1a1a1a}.score-pts.winner{color:#1860a5}.score-vs{font-size:12px;color:#aaa}
+table{width:100%;border-collapse:collapse;margin-bottom:8px}
+th,td{border:0.5px solid #bbb;padding:3px 4px;text-align:center;font-size:9px}
+th{background:#1860a5;color:#fff;font-weight:bold}
+td:nth-child(3){text-align:left;padding-left:4px}
+.tot-row td{background:#e8f0fb;font-weight:bold;color:#1860a5}
+.section-title{font-size:12px;font-weight:bold;color:#1860a5;border-left:3px solid #1860a5;padding-left:6px;margin:8px 0 5px}
+.legend-box{font-size:8px;color:#555;line-height:1.9;background:#f8f9fc;padding:8px;border-radius:4px}
+tr:nth-child(even) td{background:#f8f9fc}
+@page{margin:8mm;size:A4 landscape}
+@media print{body{padding:0}}`;
+    const html=`<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>試合記録</title><style>${css}</style></head><body>${content.innerHTML}<script>window.onload=function(){window.print();}<\/script></body></html>`;
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    const an=document.getElementById('teamAname').value||'チームA';
+    const bn=document.getElementById('teamBname').value||'チームB';
+    const d=document.getElementById('gamedate').value||'';
+    a.download=`試合記録_${an}vs${bn}_${d}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    alert('HTMLファイルをダウンロードしました。\nダウンロードしたファイルをブラウザで開くと自動的に印刷ダイアログが表示されます。\n「PDFに保存」を選択してください。');
+  },300);
 }
 
 function buildScoreGrid(){
