@@ -147,10 +147,6 @@ input[type=text]:focus,input[type=date]:focus,input[type=time]:focus,input[type=
         <div class="form-row"><label>開催場所</label><input type="text" id="venue" placeholder="例：〇〇アリーナ"></div>
         <div class="form-row"><label>開催日</label><input type="date" id="gamedate"></div>
         <div class="form-row"><label>コート番号</label><input type="text" id="court" placeholder="例：1"></div>
-        <div class="form-row"><label>開始時間</label><input type="time" id="starttime"></div>
-        <div class="form-row"><label>終了時間</label><input type="time" id="endtime"></div>
-        <div class="form-row"><label>主審</label><input type="text" id="ref1" placeholder="主審名"></div>
-        <div class="form-row"><label>副審</label><input type="text" id="ref2" placeholder="副審名（複数は「,」区切り）"></div>
       </div>
       <h2>試合形式</h2>
       <div style="margin-bottom:14px">
@@ -162,7 +158,7 @@ input[type=text]:focus,input[type=date]:focus,input[type=time]:focus,input[type=
           <button class="format-btn" onclick="setQTime(12,this)">12分</button>
         </div>
         <div style="margin-top:6px;font-size:11px;color:#888">
-          選択中：<span id="qtimeLabel" style="color:#1860a5;font-weight:600">6分 × 4Q ＝ 記24分</span>
+          選択中：<span id="qtimeLabel" style="color:#1860a5;font-weight:600">6分 × 4Q ＝ 計24分</span>
         </div>
       </div>
       <div style="margin-bottom:4px">
@@ -175,9 +171,7 @@ input[type=text]:focus,input[type=date]:focus,input[type=time]:focus,input[type=
       <h2 style="margin-top:14px">チーム情報</h2>
       <div class="form-grid">
         <div class="form-row"><label>チームA 正式名称</label><input type="text" id="teamAname" placeholder="例：〇〇クラブU18"></div>
-        <div class="form-row"><label>チームA 略称（8文字以内）</label><input type="text" id="teamAshort" placeholder="例：〇〇U18"></div>
         <div class="form-row"><label>チームB 正式名称</label><input type="text" id="teamBname" placeholder="例：△△クラブU18"></div>
-        <div class="form-row"><label>チームB 略称（8文字以内）</label><input type="text" id="teamBshort" placeholder="例：△△U18"></div>
       </div>
     </div>
   </div>
@@ -379,8 +373,8 @@ function showTab(id,el){
 function syncLabels(){
   const an=document.getElementById('teamAname').value||'チームA';
   const bn=document.getElementById('teamBname').value||'チームB';
-  const as=document.getElementById('teamAshort').value||an;
-  const bs=document.getElementById('teamBshort').value||bn;
+  const as=an;
+  const bs=bn;
   document.getElementById('scoreA-label').textContent=as;
   document.getElementById('scoreB-label').textContent=bs;
   document.getElementById('teamA-header').textContent=an+' 選手スタッツ';
@@ -448,8 +442,6 @@ function generateReport(){
   const tournament=document.getElementById('tournament').value;
   const venue=document.getElementById('venue').value;
   const gamedate=document.getElementById('gamedate').value;
-  const ref1=document.getElementById('ref1').value;
-  const ref2=document.getElementById('ref2').value;
   const periods=window._periods||4;
   const isQ=(periods===4);
   const pLabels=isQ?['1Q','2Q','3Q','4Q','OT']:['1P','2P','OT'];
@@ -473,14 +465,94 @@ function generateReport(){
   const teamMinB=mpg*5;
   const paceA=(mpg*((advA.poss+advB.poss)/(2*(teamMinA/5)))).toFixed(2);
   const paceB=(mpg*((advA.poss+advB.poss)/(2*(teamMinB/5)))).toFixed(2);
-  // 両チームのPaceは同じ値になる（対称計算）
   const possAstr=advA.poss.toFixed(2);
   const possBstr=advB.poss.toFixed(2);
 
+  // シュート試投比率計算
+  const s3A=advA.p3a,s2A=advA.p2a,sfA=advA.fa;
+  const s3B=advB.p3a,s2B=advB.p2a,sfB=advB.fa;
+  const stotA=s3A+s2A+sfA||1,stotB=s3B+s2B+sfB||1;
+  const r3A=(s3A/stotA*100).toFixed(1),r2A=(s2A/stotA*100).toFixed(1),rfA=(sfA/stotA*100).toFixed(1);
+  const r3B=(s3B/stotB*100).toFixed(1),r2B=(s2B/stotB*100).toFixed(1),rfB=(sfB/stotB*100).toFixed(1);
+
+  function dualBar(labelA,valA,labelB,valB,label,unit,higherIsBetter){
+    if(higherIsBetter===undefined)higherIsBetter=true;
+    const maxVal=Math.max(+valA,+valB,0.001);
+    const pctA=(+valA/maxVal*100).toFixed(1);
+    const pctB=(+valB/maxVal*100).toFixed(1);
+    const aWins=higherIsBetter?(+valA>+valB):(+valA<+valB);
+    const bWins=higherIsBetter?(+valB>+valA):(+valB<+valA);
+    return `<div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:600;color:#666;margin-bottom:5px">${label}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <div style="width:80px;text-align:right;font-size:10px;font-weight:${aWins?'700':'400'};color:${aWins?'#1860a5':'#666'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${labelA}</div>
+        <div style="flex:1;background:#eef3fb;border-radius:3px;height:18px;overflow:hidden">
+          <div style="background:${aWins?'#1860a5':'#90afd4'};height:100%;width:${pctA}%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">
+            <span style="font-size:10px;color:#fff;font-weight:700;white-space:nowrap">${valA}${unit||''}</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:80px;text-align:right;font-size:10px;font-weight:${bWins?'700':'400'};color:${bWins?'#c0392b':'#666'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${labelB}</div>
+        <div style="flex:1;background:#fdf0f0;border-radius:3px;height:18px;overflow:hidden">
+          <div style="background:${bWins?'#c0392b':'#e89090'};height:100%;width:${pctB}%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">
+            <span style="font-size:10px;color:#fff;font-weight:700;white-space:nowrap">${valB}${unit||''}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function pieChart(teamName,r3,r2,rf,s3,s2,sf,idSuffix){
+    // SVGパイチャート生成
+    const vals=[+r3,+r2,+rf];
+    const colors=['#1860a5','#27ae60','#e67e22'];
+    const labels=['3P','2P','FT'];
+    const counts=[s3,s2,sf];
+    const size=110;
+    const cx=size/2,cy=size/2,radius=48;
+    let paths='';
+    let startAngle=-90; // 12時スタート
+    vals.forEach((v,i)=>{
+      const angle=v/100*360;
+      const endAngle=startAngle+angle;
+      const rad1=startAngle*Math.PI/180;
+      const rad2=endAngle*Math.PI/180;
+      const x1=cx+radius*Math.cos(rad1);
+      const y1=cy+radius*Math.sin(rad1);
+      const x2=cx+radius*Math.cos(rad2);
+      const y2=cy+radius*Math.sin(rad2);
+      const largeArc=angle>180?1:0;
+      if(v>0){
+        paths+=`<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${radius},${radius} 0 ${largeArc},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${colors[i]}" stroke="#fff" stroke-width="1.5"/>`;
+        // ラベル（中心角に配置）
+        const midAngle=(startAngle+endAngle)/2*Math.PI/180;
+        const lx=cx+(radius*0.65)*Math.cos(midAngle);
+        const ly=cy+(radius*0.65)*Math.sin(midAngle);
+        if(v>8){
+          paths+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="9" font-weight="bold">${v}%</text>`;
+        }
+      }
+      startAngle=endAngle;
+    });
+    const legend=colors.map((c,i)=>`
+      <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#444">
+        <span style="display:inline-block;width:10px;height:10px;background:${c};border-radius:2px;flex-shrink:0"></span>
+        <span>${labels[i]} ${vals[i]}%（${counts[i]}本）</span>
+      </div>`).join('');
+    return `<div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;color:#444;margin-bottom:6px;text-align:center">${teamName}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex-shrink:0">${paths}</svg>
+        <div style="display:flex;flex-direction:column;gap:5px">${legend}</div>
+      </div>
+    </div>`;
+  }
+
   const html=`<div id="printArea">
   <div class="card report-header">
-    <div class="report-title">${tournament}</div>
-    <div class="report-sub">${gamedate} ｜ ${venue}${ref1?' ｜ 主審：'+ref1:''}${ref2?' ／ '+ref2:''}</div>
+    <div class="report-title">${tournament||'試合記録'}</div>
+    <div class="report-sub">${gamedate}${venue?' ｜ '+venue:''}</div>
   </div>
   <div class="card">
     <div class="score-display">
@@ -523,18 +595,28 @@ function generateReport(){
     </table></div>
   </div>
   <div class="card">
-    <div class="section-title">チーム高度分析指標</div>
-    <table class="adv-table adv-target">
-      <thead><tr><th>チーム</th><th>POSS</th><th>Pace</th><th>PPP</th><th>eFG%</th><th>TO%</th><th>FTR</th><th>ORB%</th></tr></thead>
-      <tbody>
-        <tr><td style="text-align:left;padding-left:8px"><strong>${an}</strong></td><td>${possAstr}</td><td>${paceA}</td><td>${advA.ppp}</td><td>${advA.efg}</td><td>${advA.topct}</td><td>${advA.ftr}</td><td>${advA.orbpct}</td></tr>
-        <tr><td style="text-align:left;padding-left:8px"><strong>${bn}</strong></td><td>${possBstr}</td><td>${paceB}</td><td>${advB.ppp}</td><td>${advB.efg}</td><td>${advB.topct}</td><td>${advB.ftr}</td><td>${advB.orbpct}</td></tr>
-      </tbody>
-    </table>
+    <div class="section-title">チーム分析 比較</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#1860a5;margin-bottom:10px;padding-bottom:4px;border-bottom:2px solid #d0e0f5">高度分析指標</div>
+        ${dualBar(an,possAstr,bn,possBstr,'POSS（ポゼッション）')}
+        ${dualBar(an,paceA,bn,paceB,'Pace（ペース）')}
+        ${dualBar(an,advA.ppp,bn,advB.ppp,'PPP（得点効率）')}
+        ${dualBar(an,parseFloat(advA.efg),bn,parseFloat(advB.efg),'eFG%（シュート効率）','%')}
+        ${dualBar(an,parseFloat(advA.topct),bn,parseFloat(advB.topct),'TO%（ターンオーバー率）','%',false)}
+        ${dualBar(an,parseFloat(advA.ftr),bn,parseFloat(advB.ftr),'FTR（フリースロー率）','%')}
+        ${dualBar(an,parseFloat(advA.orbpct),bn,parseFloat(advB.orbpct),'ORB%（オフェンスRB獲得率）','%')}
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#1860a5;margin-bottom:10px;padding-bottom:4px;border-bottom:2px solid #d0e0f5">シュート試投比率（3P／2P／FT）</div>
+        ${pieChart(an,r3A,r2A,rfA,s3A,s2A,sfA,'A')}
+        ${pieChart(bn,r3B,r2B,rfB,s3B,s2B,sfB,'B')}
+      </div>
+    </div>
   </div>
   <div class="card legend-box">
-    <strong>凡例：</strong>PTS:得点 ｜ 3P:3点シュート成功/試投 ｜ 2P:2点成功/試投 ｜ FT:フリースロー成功/試投 ｜ OR:オフェンスRB ｜ DR:ディフェンスRB ｜ REB:合計RB ｜ PF:ファール ｜ TO:ターンオーバー ｜ AS:アシスト ｜ ST:スティール ｜ BS:ブロック ｜ EFF:貢献度(得点+REB+AS+ST+BS−(試投−成功)−(FT試投−FT成功)−TO)<br>
-    POSS:ポゼッション ｜ Pace:ペース ｜ PPP:得点効率(=PTS÷POSS) ｜ eFG%:シュート効率=(FGM+0.5×3PM)/FGA ｜ TO%:TO発生率 ｜ FTR:FT率(FTA/FGA) ｜ ORB%:オフェンスRB獲得率
+    <strong>凡例：</strong>PTS:得点 ｜ 3P:3点シュート成功/試投 ｜ 2P:2点成功/試投 ｜ FT:フリースロー成功/試投 ｜ OR:オフェンスRB ｜ DR:ディフェンスRB ｜ REB:合計RB ｜ PF:ファール ｜ TO:ターンオーバー ｜ AS:アシスト ｜ ST:スティール ｜ BS:ブロック ｜ EFF:貢献度<br>
+    POSS:ポゼッション ｜ Pace:ペース ｜ PPP:得点効率(PTS÷POSS) ｜ eFG%:シュート効率 ｜ TO%:TO発生率（低い方が良い） ｜ FTR:FT率(FTA/FGA) ｜ ORB%:オフェンスRB獲得率
   </div>
 </div>`;
   document.getElementById('reportContent').innerHTML=html;
@@ -551,8 +633,8 @@ function printPDF(){
 
 function buildScoreGrid(){
   const periods=window._periods||4;
-  const an=document.getElementById('teamAshort').value||document.getElementById('teamAname').value||'チームA';
-  const bn=document.getElementById('teamBshort').value||document.getElementById('teamBname').value||'チームB';
+  const an=document.getElementById('teamAname').value||'チームA';
+  const bn=document.getElementById('teamBname').value||'チームB';
   const grid=document.getElementById('scoreGrid');
   const isQ=(periods===4);
   const labels=isQ?['1Q','2Q','3Q','4Q','OT']:['1P','2P','OT'];
