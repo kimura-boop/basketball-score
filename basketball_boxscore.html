@@ -274,9 +274,16 @@ input[type=text]:focus,input[type=date]:focus,input[type=time]:focus,input[type=
   <!-- レポート -->
   <div id="tab-report" class="section">
     <div class="card">
-      <div class="btn-row" style="margin-bottom:0">
+      <div class="btn-row" style="margin-bottom:8px">
         <button class="btn btn-primary" onclick="generateReport()">レポート生成</button>
-        <button class="btn btn-success" onclick="openPrintPage()">🖨 印刷用ページを開く</button>
+        <button class="btn btn-success" onclick="saveAndShowLink()">💾 印刷用データを保存</button>
+      </div>
+      <div id="printLinkArea" style="display:none;padding:10px;background:#e8f5e9;border-radius:6px;font-size:12px">
+        ✅ データを保存しました。下のボタンから印刷ページを開いてください。<br>
+        <a id="printPageLink" href="https://kimura-boop.github.io/basketball-score/basketball_report.html" target="_blank"
+          style="display:inline-block;margin-top:8px;padding:8px 20px;background:#15803d;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px">
+          🖨 印刷ページを開く（新しいタブ）
+        </a>
       </div>
     </div>
     <div id="reportContent"></div>
@@ -651,12 +658,18 @@ function generateReport(){
   document.getElementById('reportContent').innerHTML=html;
 }
 
-function openPrintPage(){
+function saveAndShowLink(){
   try { generateReport(); } catch(e){ alert('レポート生成エラー：\n'+e.message); return; }
   setTimeout(()=>{
     const content=document.getElementById('printArea');
     if(!content){ alert('先にレポートを生成してください。'); return; }
-    window.print();
+    try {
+      localStorage.setItem('bja_report_html', content.outerHTML);
+      localStorage.setItem('bja_report_time', String(Date.now()));
+      document.getElementById('printLinkArea').style.display='block';
+    } catch(e){
+      alert('データ保存エラー：\n'+e.message);
+    }
   },300);
 }
 

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>試合記録レポート</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif}
+body{background:#f4f6f9;padding:12px;font-size:10px;color:#1a1a1a}
+.topbar{background:#fff;border:1px solid #e0e4ec;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:14px;font-weight:600;color:#1860a5}
+.topbar p{font-size:11px;color:#888;margin-top:2px}
+.btn-print{padding:9px 22px;background:#15803d;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-print:hover{background:#0f6030}
+.btn-back{padding:9px 16px;background:#fff;color:#555;border:1px solid #d0d5e0;border-radius:6px;font-size:12px;cursor:pointer;margin-right:8px;text-decoration:none;display:inline-block}
+.report-wrap{background:#fff;border:1px solid #e0e4ec;border-radius:10px;padding:12px}
+.no-data{text-align:center;padding:60px 20px;color:#aaa;font-size:14px}
+
+/* レポート内スタイル（box-tableなど） */
+.box-table{width:100%;border-collapse:collapse;font-size:8px}
+.box-table th{background:#1860a5;color:#fff;padding:3px 2px;text-align:center;font-size:7px;font-weight:600;border:0.5px solid #1450a0}
+.box-table th:nth-child(3){text-align:left}
+.box-table td{border:0.5px solid #d0d9ec;padding:2px;text-align:center;color:#1a1a1a}
+.box-table td:nth-child(3){text-align:left;padding-left:3px}
+.box-table tr:nth-child(even) td{background:#f8f9fc}
+.box-table .tot-row td{background:#e8f0fb;font-weight:700;color:#1860a5}
+
+@media print {
+  .topbar{display:none !important}
+  body{background:#fff;padding:0}
+  .report-wrap{border:none;padding:0;border-radius:0}
+  @page{margin:6mm;size:A4 landscape}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1>📋 試合記録レポート</h1>
+    <p>印刷ボタンを押してPDF保存または印刷してください</p>
+  </div>
+  <div>
+    <a class="btn-back" href="javascript:history.back()">← 入力に戻る</a>
+    <button class="btn-print" onclick="window.print()">🖨 印刷 / PDF保存</button>
+  </div>
+</div>
+<div class="report-wrap" id="reportWrap">
+  <div class="no-data">⏳ データを読み込み中...</div>
+</div>
+<script>
+window.onload=function(){
+  try{
+    var html=localStorage.getItem('bja_report_html');
+    var t=localStorage.getItem('bja_report_time');
+    if(!html){
+      document.getElementById('reportWrap').innerHTML='<div class="no-data">⚠️ データが見つかりません。<br><br>入力ページで「レポート生成」→「印刷用データを保存」を先に実行してください。</div>';
+      return;
+    }
+    var age=Date.now()-(parseInt(t)||0);
+    if(age>3600000){
+      document.getElementById('reportWrap').innerHTML='<div class="no-data">⚠️ データが古すぎます（1時間以上前）。<br><br>入力ページで再度「レポート生成」→「印刷用データを保存」を実行してください。</div>';
+      return;
+    }
+    document.getElementById('reportWrap').innerHTML=html;
+  }catch(e){
+    document.getElementById('reportWrap').innerHTML='<div class="no-data">⚠️ エラー：'+e.message+'</div>';
+  }
+};
+</script>
+</body>
+</html>
