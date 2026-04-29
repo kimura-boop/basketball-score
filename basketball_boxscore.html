@@ -111,12 +111,19 @@ input[type=text]:focus,input[type=date]:focus,input[type=time]:focus,input[type=
 .team-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 
 @media print {
-  body *{visibility:hidden}
-  #printArea, #printArea *{visibility:visible}
-  #printArea{
-    position:absolute;top:0;left:0;width:100%;
-    background:#fff;padding:8mm;font-size:10px;color:#000
+  body > .container > h1,
+  body > .container > p.subtitle,
+  body > .container > .tabs,
+  body > .container > #tab-basic,
+  body > .container > #tab-score,
+  body > .container > #tab-teamA,
+  body > .container > #tab-teamB,
+  #tab-report > .card:first-child {
+    display:none !important;
   }
+  body{background:#fff;margin:0;padding:0}
+  .container{padding:0;max-width:100%}
+  #tab-report{display:block !important}
   #printArea .card{border:1px solid #ccc;border-radius:4px;padding:8px;margin-bottom:8px;page-break-inside:avoid}
   #printArea .report-title{font-size:15px;color:#1860a5}
   #printArea .score-pts{font-size:22px}
