@@ -125,6 +125,11 @@ input[type=text]:focus,input[type=date]:focus,input[type=time]:focus,input[type=
   body{background:#fff;margin:0;padding:0}
   .container{padding:0;max-width:100%}
   #tab-report{display:block !important}
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
   #printArea .card{border:1px solid #ccc;padding:6px;margin-bottom:6px;page-break-inside:avoid}
   #printArea .box-table th,#printArea .box-table td{font-size:7px;padding:2px}
   @page{margin:6mm;size:A4 landscape}
